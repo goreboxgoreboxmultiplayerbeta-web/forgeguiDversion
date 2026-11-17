@@ -94,6 +94,7 @@ async function fetchJson(url, opts={}, timeout=50000) {
     const msg = data?.message || data?.error?.message || (typeof data?.error === 'string' ? data.error : '') || `${response.status} ${response.statusText}`;
     const e = new Error(`HTTP ${response.status}: ${String(msg).slice(0,450)}`);
     e.statusCode = response.status;
+    e.providerCode = String(data?.error?.code || data?.code || '');
     throw e;
   }
   return data;
@@ -175,15 +176,36 @@ async function generate(input) {
   }
   const prev = Array.isArray(history) ? history.slice(-6).filter(x=>['user','assistant'].includes(x?.role) && typeof x.content === 'string').map(x=>({role:x.role,content:x.content.slice(0,1400)})) : [];
   const messages = [{role:'system',content:SYSTEM+'\n'+context},...prev,{role:'user',content:message.trim()}];
-  const result = await fetchJson('https://api.z.ai/api/paas/v4/chat/completions', {
-    method:'POST', headers:{'Authorization':`Bearer ${ZAI_KEY}`,'Content-Type':'application/json'},
-    body:JSON.stringify({model:ZAI_MODEL,messages,temperature:0.2,max_tokens:6500})
-  }, 110000);
+  // Retry only temporary overloads (1305), not expired keys, balance errors or rate-limit 1302.
+  // If the primary free model is busy, try the other free Flash model once.
+  const freeModels = [ZAI_MODEL, ZAI_MODEL === 'glm-4.7-flash' ? 'glm-4.5-flash' : 'glm-4.7-flash'];
+  let result, activeModel = ZAI_MODEL;
+  outer: for (const model of freeModels) {
+    activeModel = model;
+    for (let attempt = 0; attempt < (model === ZAI_MODEL ? 2 : 1); attempt++) {
+      try {
+        result = await fetchJson('https://api.z.ai/api/paas/v4/chat/completions', {
+          method:'POST', headers:{'Authorization':`Bearer ${ZAI_KEY}`,'Content-Type':'application/json'},
+          body:JSON.stringify({model,messages,temperature:0.2,max_tokens:5500})
+        }, 110000);
+        break outer;
+      } catch (e) {
+        const overloaded = e.statusCode === 429 && (e.providerCode === '1305' || /temporarily overloaded/i.test(e.message));
+        if (!overloaded) throw e;
+        if (model === ZAI_MODEL && attempt === 0) await sleep(2500);
+      }
+    }
+  }
+  if (!result) {
+    const e = new Error('Z.ai сейчас перегружен (1305). Бесплатные GLM Flash не ответили даже после повторной попытки. Попробуй позднее.');
+    e.statusCode = 503;
+    throw e;
+  }
   const response = parseAI(result?.choices?.[0]?.message?.content);
   if (!response.code && mode !== 'help') throw new Error('Модель не вернула Luau-код. Уточни запрос и попробуй снова.');
   if (Buffer.byteLength(response.code,'utf8') > 180000) throw new Error('Сгенерированный код слишком большой. Раздели задачу.');
   response.mode = mode;
-  response.model = result.model || ZAI_MODEL;
+  response.model = result.model || activeModel;
   if (scriptData) { response.selectedScript = {id:scriptData.id,name:scriptData.name,type:scriptData.type,originalHash:scriptData.sha256}; }
   return response;
 }
