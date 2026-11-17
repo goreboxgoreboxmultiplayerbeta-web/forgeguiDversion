@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: forgecloud-ai
+    runtime: node
+    plan: free
+    buildCommand: echo 'No dependencies to install'
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_PASSWORD
+        sync: false
+      - key: ZAI_API_KEY
+        sync: false
+      - key: ZAI_MODEL
+        value: glm-4.7-flash
+      - key: ROBLOX_API_KEY
+        sync: false
+      - key: ROBLOX_UNIVERSE_ID
+        sync: false
+      - key: ROBLOX_PLACE_ID
+        sync: false

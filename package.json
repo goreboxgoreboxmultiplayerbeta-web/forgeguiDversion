@@ -1,0 +1,9 @@
+{
+  "name": "forgecloud-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Single-owner Roblox AI builder with free Z.ai GLM models and Open Cloud integration",
+  "engines": { "node": ">=20" },
+  "scripts": {"start": "node server.js", "test": "node --test"},
+  "license": "MIT"
+}
