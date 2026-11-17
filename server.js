@@ -269,7 +269,7 @@ async function handle(req, res) {
     if (b.confirmation!=='SAVE_DRAFT') return err(res,400,'Требуется явное подтверждение');
     if (typeof b.source!=='string'||!b.source.trim()||Buffer.byteLength(b.source,'utf8')>140000) throw new Error('Неверный размер Luau-кода');
     // The user reviews the code, then gives explicit permission to execute and save unpublished draft.
-    const wrapper = `-- ForgeCloud AI: code approved by owner\nlocal ok, err = pcall(function()\n${b.source}\nend)\nif not ok then error("ForgeCloud generated script failed: " .. tostring(err)) end\ngame:GetService("AssetService"):SavePlaceAsync({SaveWithoutPublish = true})\nprint("ForgeCloud AI: saved unpublished place version")\n`;
+    const wrapper = `-- ForgeCloud AI: code approved by owner\nlocal ok, err = pcall(function()\n${b.source}\nend)\nif not ok then error("ForgeCloud generated script failed: " .. tostring(err)) end\ngame:GetService("AssetService"):SavePlaceAsync({SaveWithoutPublish = false})\nprint("ForgeCloud AI: saved unpublished place version")\n`;
     const task = await roblox(`${cloudPrefix()}/luau-execution-session-tasks`,'POST',{script:wrapper,timeout:'300s'});
     const taskPath = safeCloudPath(task.path);
     return json(res,200,{ok:true,path:taskPath,state:task.state || 'PROCESSING'});
