@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0c111f">
+  <meta name="description" content="ForgeCloud AI — собственный ИИ-помощник для Roblox Luau через Z.ai и Roblox Open Cloud.">
+  <title>ForgeCloud AI — Roblox Builder</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+<div class="bg-glow glow-a"></div><div class="bg-glow glow-b"></div>
+<div id="login-view" class="login-wrap hidden">
+  <div class="login-card">
+    <div class="brand-mark large">✦</div>
+    <h1>ForgeCloud <span>AI</span></h1>
+    <p class="muted">Создавай игры Roblox вместе с ИИ</p>
+    <form id="login-form" class="login-form">
+      <label for="password">Пароль своего сайта</label>
+      <input id="password" type="password" placeholder="APP_PASSWORD из Render" autocomplete="current-password" required>
+      <button class="primary" type="submit">Войти в мастерскую <span>→</span></button>
+      <p class="message error" id="login-error"></p>
+    </form>
+    <p class="fine">Этот пароль ты устанавливаешь сам в переменных Render. Ключи ИИ и Roblox не вводятся в браузере.</p>
+  </div>
+</div>
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">✦</div><div><strong>FORGECLOUD <span>AI</span></strong><small>ROBLOX BUILDER</small></div></div>
+    <div class="side-section"><div class="side-label">ПРОЕКТ</div>
+      <div class="project-info"><div class="project-ico">▣</div><div class="project-text"><strong id="project-title">Мой Roblox-плейс</strong><small id="project-subtitle">Подключение...</small></div><span id="roblox-indicator" class="dot"></span></div>
+      <button class="secondary wide" id="refresh-tree">↻ &nbsp;Обновить объекты</button>
+    </div>
+    <div class="side-section tree-section"><div class="side-label">EXPLORER <span id="tree-count">0</span></div><div id="tree" class="tree" aria-label="Объекты Roblox"><p class="muted small">Здесь появятся объекты твоего плейса.</p></div></div>
+    <div class="side-section side-footer"><div class="side-label">ИНСТРУМЕНТЫ</div>
+      <a class="side-link" href="https://z.ai/manage-apikey/apikey-list" target="_blank" rel="noopener noreferrer">♧ &nbsp;Ключ Z.ai <span>↗</span></a>
+      <a class="side-link" href="https://create.roblox.com/dashboard/credentials" target="_blank" rel="noopener noreferrer">▤ &nbsp;Ключ Roblox <span>↗</span></a>
+      <button class="side-link" id="logout">⎋ &nbsp;Выйти <span>→</span></button>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div class="header-main"><span class="eyebrow">ТВОЯ ИИ-МАСТЕРСКАЯ</span><h1>Создавай без границ<span class="accent">.</span></h1><p>Опиши идею — ИИ подготовит Luau и поможет изменить твой плейс.</p></div>
+      <div class="header-actions"><span id="ai-state" class="status-pill">● ИИ: проверка</span><span id="rbx-state" class="status-pill">● Roblox: проверка</span></div>
+    </header>
+    <section class="workarea">
+      <div class="chat-window" id="chat-window">
+        <div class="panel-top"><div class="panel-heading"><div class="icon-square">✦</div><div><strong>ForgeCloud Chat</strong><span>Твой личный Luau-помощник</span></div></div><div class="panel-controls"><button id="new-chat" title="Очистить чат" class="icon-button">↻</button><button id="close-chat" title="Свернуть чат" class="icon-button">×</button></div></div>
+        <div id="chat-feed" class="chat-feed" aria-live="polite"><div class="intro">
+          <div class="intro-icon">✦</div><h2>Преврати идею в игру</h2><p>Например, попроси создать город, систему монет, магазин или красивое главное меню.</p>
+          <div class="suggestions"><button class="suggestion" data-example="Создай город из зданий, дорог и фонарей, добавь красивый закат">🏙️ Создать город</button><button class="suggestion" data-example="Создай систему сбора монет с leaderstats и GUI со счётчиком">🪙 Система монет</button><button class="suggestion" data-example="Сделай красивое главное меню с кнопками Играть и Настройки для телефона">📱 Главное меню</button></div>
+        </div></div>
+        <form id="chat-form" class="composer"><div class="mode-tabs" role="group" aria-label="Режим ИИ"><button type="button" class="mode active" data-mode="build">✦ Создать объекты</button><button type="button" class="mode" data-mode="edit">⌘ Изменить скрипт</button><button type="button" class="mode" data-mode="help">? Спросить ИИ</button></div>
+          <div id="selected-script" class="selected-script hidden"><span>Выбран скрипт:</span><strong id="selected-name"></strong><button type="button" id="clear-selection" title="Снять выбор">×</button></div>
+          <div class="compose-row"><textarea id="prompt" placeholder="Например: создай красивую карту с домами и деревьями..." maxlength="3500" rows="2" required></textarea><button class="send" id="send-btn" type="submit" aria-label="Отправить запрос">➤</button></div><div class="compose-hint"><span>Enter — отправить · Shift+Enter — новая строка</span><span id="char-count">0 / 3500</span></div>
+        </form>
+      </div>
+      <div id="reopen-wrapper" class="reopen-wrapper hidden"><button id="reopen-chat" class="primary">✦ Открыть ForgeCloud Chat</button></div>
+      <section class="output-pane"><div class="output-header"><div><span class="eyebrow">РЕЗУЛЬТАТ</span><h2>Luau-редактор</h2></div><div class="file-type">● LUAU</div></div>
+        <p class="muted small" id="preview-summary">Здесь появится код, созданный ИИ. Перед сохранением можно просмотреть и изменить его.</p>
+        <textarea id="code-view" spellcheck="false" placeholder="-- Код будет здесь..." aria-label="Сгенерированный Luau код"></textarea>
+        <div class="result-actions"><button id="copy-code" class="secondary">⧉ &nbsp;Копировать</button><button id="download-code" class="secondary">↓ &nbsp;Скачать .luau</button><button id="apply-code" class="primary" disabled>✓ &nbsp;Применить к Roblox</button></div>
+        <div id="notes" class="notes">ИИ ещё не создал код. Подключи Z.ai и отправь запрос.</div>
+        <div class="task-status hidden" id="task-box"><strong id="task-title">Задача Roblox</strong><pre id="task-output"></pre></div>
+        <div class="safety-note"><span>⚑</span><div><strong>Изменения только после подтверждения</strong><p>Создание объектов использует Luau Execution и сохраняет черновик плейса без публикации. Изменение скрипта перезаписывает выбранный Source. Сначала сделай резервную копию игры.</p></div></div>
+      </section>
+    </section>
+    <footer>FORGECLOUD AI • Независимый проект, не связан с Roblox или Z.ai • <span id="footer-model">glm-4.7-flash</span></footer>
+  </main>
+</div>
+<div class="toast hidden" id="toast" role="status"></div>
+</body>
+</html>
